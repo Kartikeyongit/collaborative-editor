@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  server:
+    build: ./server
+    ports:
+      - "4000:4000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - CLIENT_URL=http://localhost:3000
+      - NODE_ENV=production
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+
+  client:
+    build: ./client
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_SOCKET_URL=http://localhost:4000
+      - REACT_APP_API_URL=http://localhost:4000/api
+    depends_on:
+      - server
+
+volumes:
+  redis-data:
